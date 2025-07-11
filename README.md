@@ -1,98 +1,105 @@
 ```markdown
 # Rust Playground 🦀
 
-실전 학습용 **미니 Rust 예제 모음**입니다.  
-각 예제는 **완전히 독립된 실행 파일**(바이너리)로, `src/bin/` 아래에 `main()`을 하나씩 갖습니다.  
-복잡한 모듈·라이브러리 참조 없이 **파일만 복사해도** 바로 돌려볼 수 있도록 설계했습니다.
+Rust를 처음 배울 때 바로 **`cargo run`** 으로 실행(=자동 빌드)하며
+핵심 개념을 익힐 수 있는 초소형 예제 모음입니다.
+
+> `cargo run` → *필요하면* 자동으로 빌드 후 즉시 실행  
+> 별도 `cargo build` 단계 없이 “바로 런”이 가능합니다.
 
 ---
 
-## 🔖 포함된 예제
-
-| 바이너리 이름 | 설명 | 실행 예시 |
-|---------------|------|-----------|
-| `calculator`      | 사용자 입력으로 사칙연산을 수행하는 CLI 계산기 | `cargo run --bin calculator` |
-| `insertion_sort`  | 삽입정렬(Insertion Sort) 알고리즘 데모         | `cargo run --bin insertion_sort` |
-
-새 예제를 추가하려면 `src/bin/`에 `foo.rs`를 만들고 `fn main()`을 작성하면 끝!
-
----
-
-## 🗂️ 디렉터리 구조
+## 📂 프로젝트 구조
 
 ```
 
 rust/
-├── src/
-│   └── bin/
-│       ├── calculator.rs      # CLI 계산기
-│       └── insertion\_sort.rs  # 삽입정렬 데모
-├── Cargo.toml
-└── README.md                  # ← 바로 이 파일
+├─ src/
+│  ├─ main.rs                 # 안내 메뉴(선택)
+│  └─ bin/
+│     ├─ calculator.rs        # CLI 계산기 예제
+│     └─ insertion\_sort.rs    # 삽입정렬 데모
+├─ Cargo.toml
+└─ README.md                  # ← 바로 이 파일
 
 ````
 
-> `src/main.rs` 는 **필요하지 않습니다**.  
-> (만약 공통 안내용으로 쓰고 싶다면 자유롭게 추가하세요.)
+- `src/bin/*.rs` **각각이 독립 실행파일**(바이너리)  
+  → 별도 모듈/라이브러리 참조 없음, 복사·실험 간편
+- `src/main.rs` 는 단순 안내; 없어도 무방
 
 ---
 
-## 🚀 빠른 시작
+## 🚀 빠른 실행
 
-### 1. 설치 요건
-- **Rust** stable (1.79 이상 권장)  
-  ```bash
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+| 목적 | 명령 |
+|------|------|
+| **메뉴** (optional)            | `cargo run` |
+| **CLI 계산기**                 | `cargo run --bin calculator` |
+| **삽입정렬(Insertion Sort)**   | `cargo run --bin insertion_sort` |
+| **최적화 빌드 + 실행**         | `cargo run --release --bin calculator` |
+
+---
+
+## 📝 코드 설명
+
+### 1. `calculator.rs`
+
+| 포인트 | 코드 스니펫 | 설명 |
+|--------|-------------|------|
+| 입력 읽기 | `read_line()` | `stdin().read_line()` 뒤 `trim()` 으로 공백 제거 |
+| 숫자 파싱 | `read_num()` | `String::parse::<f64>()` ➜ 실패 시 재입력 루프 |
+| 연산자 검증 | `read_op()` | `match` 로 `+ - * /` 만 허용 |
+| 계산 실행 | `calc()` | 0으로 나눌 때 `None` 반환 → `match` 로 에러 메시지 |
+| 반복 | `loop { ... }` | 사용자가 `y` 입력 시만 계속 |
+
+> **학습 포인트**  
+> - `Result`, `Option`, `match` 로 안전한 입력 처리  
+> - `String` vs `&str` 소유권, `to_lowercase()` 메서드 체인
+
+### 2. `insertion_sort.rs`
+
+| 포인트 | 코드 | 설명 |
+|--------|------|------|
+| 핵심 루프 | `for i in 1..v.len()` | 1번째부터 끝까지 key 선택 |
+| 앞쪽 이동 | `while j>0 && v[j-1]>key` | 더 큰 값 뒤로 한 칸씩 쉬프트 |
+| 삽입 | `v[j] = key` | 적절 위치에 key 삽입 |
+| 제자리 정렬 | 추가 메모리 O(1) | `Vec` 그대로 수정 |
+
+> **학습 포인트**  
+> - 배열 슬라이스 `&mut [i32]` 사용으로 **제자리(in-place) 정렬**  
+> - 루프 변수 `i, j` 로 구현하는 **고전적 삽입정렬**
+
+---
+
+## 💡 Rust 개념 한눈에
+
+| 개념 | 코드에서 보는 위치 | 의미 |
+|------|-------------------|------|
+| `loop { ... }`      | 입력 재시도 | 무한 루프, 내부 `break` 로 탈출 |
+| `match`             | 연산자·에러 처리 | 패턴 매칭, C의 switch 보다 강력 |
+| `Option<T>` / `None`| `calc()`   | 값 부재 표현, null 안전 대체 |
+| `Result<T,_>`       | `read_line`| I/O 성공·실패 구분 |
+| 가변 참조 `&mut`    | 정렬함수   | 슬라이스를 **수정** 가능하게 전달 |
+
+---
+
+## 🛠️ 커스텀 예제 추가
+
+1. `src/bin/my_demo.rs` 파일 생성  
+2. `fn main() { /* … */ }` 작성  
+3. 실행:  
+   ```bash
+   cargo run --bin my_demo
 ````
 
-### 2. 클론 & 실행
-
-```bash
-git clone https://github.com/hwkim3330/rust.git
-cd rust
-
-# 계산기 실행
-cargo run --bin calculator
-
-# 삽입정렬 실행
-cargo run --bin insertion_sort
-```
-
-### 3. 최적화 빌드
-
-```bash
-cargo build --release --bin calculator
-```
-
-생성된 실행 파일은 `target/release/`에 위치합니다.
-
 ---
 
-## ✏️ 학습 포인트
-
-* **입력 처리 & 에러 핸들링** (계산기)
-* **소유권 & 문자열 파싱** (`String`, `&str`)
-* **제자리(in-place) 정렬 알고리즘** 이해 (삽입정렬)
-
-각 소스 파일에 **주석**으로 핵심 개념을 간결히 설명해 두었습니다.
-
----
-
-## 🤝 Contributing
-
-> 작은 실험용 레포이지만 PR·Issue 언제든 환영합니다!
-
-1. 포크(Fork) 후 브랜치 생성
-2. 개선 사항 커밋 → Pull Request
-3. 설명 간단히 작성 → 리뷰 후 병합
-
----
-
-## 🪪 라이선스
+## 📜 라이선스
 
 MIT License © 2025 [hwkim3330](https://github.com/hwkim3330)
 
 ```
 
-> 필요한 섹션(예: **Tests**, **Roadmap**)은 프로젝트가 커짐에 따라 자유롭게 추가하시면 됩니다!
+> 위 내용을 `README.md`에 그대로 붙여 넣으면 **프로젝트 소개 + 코드 요약 + 실행 방법**이 모두 포함된 깔끔한 리드미가 완성됩니다. 필요에 따라 테스트, 기여 가이드 등을 추가해도 좋습니다. 😉
 ```
