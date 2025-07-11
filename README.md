@@ -1,4 +1,23 @@
 ```markdown
+
+---
+
+## ☁️ 온라인에서 바로 실행해보기
+
+### ▶ GitHub Codespaces (브라우저 VS Code 환경)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&repo=hwkim3330%2Frust&ref=main)
+
+> 깃허브 계정만 있으면 별도 설치 없이 브라우저에서 `cargo run` 가능
+
+---
+
+### ▶ Replit (웹 기반 Rust IDE)
+
+[![Run on Replit](https://replit.com/badge/github/hwkim3330/rust)](https://replit.com/github/hwkim3330/rust)
+
+> 웹에서 바로 `cargo run` 가능하며 수정·저장도 가능 (Replit 계정 필요)
+
 # Rust Playground 🦀
 
 Rust를 처음 배울 때 바로 **`cargo run`** 으로 실행(=자동 빌드)하며
