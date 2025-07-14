@@ -1,100 +1,140 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Insertion Sort – Push Animation</title>
-
-<style>
-:root { --box: 64; --gap: 12; --step: calc(var(--box) + var(--gap)); --dur: .5s; }
-
-body  { margin:0; font-family:system-ui, sans-serif; background:#f4f6f8; }
-h1    { text-align:center; margin:24px 0; }
-
-#stage          { position:relative; width:max-content; margin:40px auto; }
-.cell           { position:absolute; width:var(--box)px; height:var(--box)px;
-                  line-height:var(--box)px; text-align:center; border-radius:10px;
-                  background:#455a64; color:#fff; font-size:1.4rem;
-                  transition: left var(--dur) cubic-bezier(.4,.0,.2,1),
-                              transform var(--dur) cubic-bezier(.4,.0,.2,1),
-                              background var(--dur); }
-.key            { background:#c62828 !important; transform:translateY(-80px); }
-.compare        { background:#f9a825 !important; }
-
-#log            { max-width:620px; margin:24px auto; white-space:pre-line; font-size:.9rem; }
-</style>
+  <meta charset="UTF-8">
+  <title>Insertion Sort Animation – New Design</title>
+  <style>
+    :root {
+      --box-size: 60px;
+      --gap: 12px;
+      --step: calc(var(--box-size) + var(--gap));
+      --duration: 0.4s;
+      --color-bg: #f0f4f8;
+      --color-box: #546e7a;
+      --color-key: #ffca28;
+      --color-compare: #29b6f6;
+      --color-text: #333;
+      --font: 'Segoe UI', Tahoma, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--color-bg);
+      font-family: var(--font);
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+    }
+    #visualizer {
+      position: relative;
+      width: calc(var(--step) * 6 - var(--gap));
+      height: var(--box-size);
+      margin-bottom: 30px;
+    }
+    .cell {
+      position: absolute;
+      width: var(--box-size);
+      height: var(--box-size);
+      line-height: var(--box-size);
+      text-align: center;
+      background: var(--color-box);
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition:
+        left var(--duration) ease,
+        transform var(--duration) ease,
+        background var(--duration) ease;
+      font-size: 1.2rem;
+    }
+    .cell.key {
+      background: var(--color-key);
+      transform: translateY(-1.2em);
+    }
+    .cell.compare {
+      background: var(--color-compare);
+    }
+    #log {
+      width: 100%;
+      max-width: 500px;
+      white-space: pre-wrap;
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+  </style>
 </head>
 <body>
-<h1>Insertion Sort – Push Animation</h1>
+  <h1>Insertion Sort Visualization</h1>
+  <div id="visualizer"></div>
+  <div id="log"></div>
 
-<div id="stage"></div>
-<pre id="log"></pre>
+  <script>
+    const DATA = [5, 2, 9, 1, 5, 6];
+    const DELAY = 600;
+    const visualizer = document.getElementById('visualizer');
+    const logEl = document.getElementById('log');
 
-<script>
-/* ----------- 데이터 & 설정 ----------- */
-const ARR        = [5, 2, 9, 1, 5, 6];        // 정렬 대상
-const DELAY      = 800;                       // 단계 지연(ms)
-const BOX_W      = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--box'));
-const GAP        = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
-const STEP       = BOX_W + GAP;
-
-/* ----------- DOM 초기화 ----------- */
-const stage = document.getElementById('stage');
-const logEl = document.getElementById('log');
-stage.style.width = `${ARR.length * STEP - GAP}px`; // 가로 길이 설정
-
-function spawnBoxes(arr){
-  stage.innerHTML = '';
-  arr.forEach((v,i)=>{
-    const d   = document.createElement('div');
-    d.className = 'cell';
-    d.textContent = v;
-    d.style.left = `${i*STEP}px`;
-    stage.appendChild(d);
-  });
-}
-spawnBoxes(ARR);
-
-/* ----------- 유틸 ----------- */
-const sleep  = ms => new Promise(r=>setTimeout(r,ms));
-const boxes  = () => [...document.querySelectorAll('.cell')];
-
-/* ----------- 삽입정렬 애니메이션 ----------- */
-async function insertionSort(){
-  const data = [...ARR];              // 데이터 복사
-  for(let i=1;i<data.length;i++){
-    let keyVal = data[i];
-    let j=i-1;
-
-    /* key 박스 선택 & Lift */
-    const keyBox = boxes()[i];
-    keyBox.classList.add('key');
-    logEl.textContent += `[i=${i}] key=${keyVal}\n`;
-    await sleep(DELAY/2);
-
-    /* 비교하며 밀어내기 */
-    while(j>=0 && data[j] > keyVal){
-      const compBox = boxes()[j];
-      compBox.classList.add('compare'); // 비교 하이라이트
-
-      /* 데이터 & 위치 갱신 */
-      data[j+1]     = data[j];
-      compBox.style.left = `${(j+1)*STEP}px`;  // 오른쪽으로 슬라이드
-      await sleep(DELAY);
-
-      compBox.classList.remove('compare');
-      j--;
+    // 초기 박스 배치
+    function initBoxes(arr) {
+      visualizer.innerHTML = '';
+      arr.forEach((v, i) => {
+        const box = document.createElement('div');
+        box.className = 'cell';
+        box.textContent = v;
+        box.style.left = `${i * (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--step')))}px`;
+        visualizer.appendChild(box);
+      });
     }
 
-    /* key 값 내려 끼우기 */
-    data[j+1]       = keyVal;
-    keyBox.style.left = `${(j+1)*STEP}px`;
-    await sleep(DELAY/2);
-    keyBox.classList.remove('key');
-  }
-  logEl.textContent += `\n✔ 최종 결과: [${data.join(', ')}]`;
-}
+    // 비동기 sleep
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-insertionSort();
-</script>
+    async function insertionSortAnim(arr) {
+      const boxes = () => [...document.querySelectorAll('.cell')];
+      for (let i = 1; i < arr.length; i++) {
+        let key = arr[i];
+        let j = i - 1;
+
+        // key 박스 들기
+        const keyBox = boxes()[i];
+        keyBox.classList.add('key');
+        logEl.textContent += `[i=${i}] key = ${key}\n`;
+        await sleep(DELAY / 2);
+
+        // 값 밀기
+        while (j >= 0 && arr[j] > key) {
+          arr[j + 1] = arr[j];
+          const compareBox = boxes()[j];
+          compareBox.classList.add('compare');
+          compareBox.style.left = `${(j + 1) * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--step'))}px`;
+          logEl.textContent += `  move ${arr[j]} from ${j} to ${j+1}\n`;
+          await sleep(DELAY);
+          compareBox.classList.remove('compare');
+          j--;
+        }
+
+        // key 삽입
+        arr[j + 1] = key;
+        keyBox.style.left = `${(j + 1) * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--step'))}px`;
+        logEl.textContent += `  insert ${key} at ${j+1}\n\n`;
+        await sleep(DELAY / 2);
+        keyBox.classList.remove('key');
+      }
+      logEl.textContent += `✔ Sorted: [${arr.join(', ')}]`;
+    }
+
+    // 실행
+    initBoxes(DATA);
+    insertionSortAnim([...DATA]);
+  </script>
 </body>
 </html>
