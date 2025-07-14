@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Insertion Sort Animation</title>
+<style>
+  /* ====== 기본 레이아웃 ====== */
+  body        { font-family: Arial, sans-serif; background:#f5f7fa; }
+  h1          { text-align:center; margin:20px 0; }
+  #array      { display:flex; gap:8px; justify-content:center; margin-top:40px; }
+  .box        {
+    width:60px; height:60px; line-height:60px; text-align:center;
+    background:#4f6d7a; color:#fff; font-size:1.3rem; border-radius:8px;
+    transition: transform .4s ease;
+    position:relative;
+  }
+  /* 현재 key 강조 */
+  .key        { background:#d9534f !important; }
+
+  /* 설명 텍스트 */
+  #log        { max-width:600px; margin:40px auto; white-space:pre-line; }
+</style>
+</head>
+<body>
+<h1>Insertion Sort Visualization</h1>
+
+<div id="array"></div>
+<pre id="log"></pre>
+
+<script>
+/* ---------- 설정 ---------- */
+const values        = [5, 2, 9, 1, 5, 6];   // 정렬 대상
+const STEP_DELAY    = 900;                  // 밀기/삽입 단계 지연(ms)
+
+/* ---------- DOM 요소 만들기 ---------- */
+const container = document.getElementById("array");
+const logPane   = document.getElementById("log");
+
+function createBoxes(arr) {
+  container.innerHTML = "";
+  arr.forEach(v => {
+    const box = document.createElement("div");
+    box.className = "box";
+    box.textContent = v;
+    container.appendChild(box);
+  });
+}
+createBoxes(values);
+
+/* ---------- 유틸: 슬립 ---------- */
+const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+/* ---------- 핵심: 삽입정렬 애니메이션 ---------- */
+async function insertionSortAnim(arr) {
+  const boxes = () => [...document.querySelectorAll(".box")];
+
+  for (let i = 1; i < arr.length; i++) {
+    let key      = arr[i];
+    let j        = i - 1;
+
+    /* key 강조 */
+    boxes()[i].classList.add("key");
+    logPane.textContent += `[i=${i}] key=${key}\n`;
+    await sleep(STEP_DELAY / 2);
+
+    /* 값 밀어내기 */
+    while (j >= 0 && arr[j] > key) {
+      arr[j + 1] = arr[j];
+
+      /* DOM 상자의 위치를 오른쪽으로 이동 */
+      boxes()[j].style.transform = `translateX(68px)`;      // 60px + gap
+      await sleep(STEP_DELAY);
+
+      /* DOM 배열 재순서화 */
+      container.insertBefore(boxes()[j], boxes()[j + 2]);   // 한 칸 뒤로
+      boxes()[j].style.transform = "";                      // 원래 자리로
+      j--;
+    }
+
+    /* key 삽입 */
+    arr[j + 1] = key;
+    const keyBox = boxes().find(b => b.classList.contains("key"));
+    container.insertBefore(keyBox, boxes()[j + 1]);         // 새 위치
+    keyBox.classList.remove("key");
+    await sleep(STEP_DELAY);
+  }
+
+  logPane.textContent += `\n✔ 최종 결과: [${arr.join(", ")}]`;
+}
+
+insertionSortAnim(values);
+</script>
+</body>
+</html>
