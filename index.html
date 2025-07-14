@@ -2,89 +2,99 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Insertion Sort – Smooth Animation</title>
+<title>Insertion Sort – Push Animation</title>
+
 <style>
-  :root { --gap: 12px; --box: 70px; --bg: #2f4858; --key: #e63946; --duration: .5s; }
+:root { --box: 64; --gap: 12; --step: calc(var(--box) + var(--gap)); --dur: .5s; }
 
-  body      { margin:0; font-family:system-ui, sans-serif; background:#f0f2f5; }
-  h1        { text-align:center; margin:30px 0 10px; }
-  #wrap     { display:flex; flex-wrap:wrap; width:calc(var(--box)*4 + var(--gap)*3);
-              margin:40px auto; gap:var(--gap); justify-content:center; }
-  .cell     { width:var(--box); height:var(--box); line-height:var(--box);
-              background:var(--bg); color:#fff; border-radius:12px;
-              font-size:1.5rem; text-align:center; position:relative;
-              transition:transform var(--duration) cubic-bezier(.4,.0,.2,1),
-                         background var(--duration); }
-  .key      { background:var(--key) !important; }
+body  { margin:0; font-family:system-ui, sans-serif; background:#f4f6f8; }
+h1    { text-align:center; margin:24px 0; }
 
-  #log      { max-width:640px; margin:30px auto; font-size:.9rem; white-space:pre-line; }
+#stage          { position:relative; width:max-content; margin:40px auto; }
+.cell           { position:absolute; width:var(--box)px; height:var(--box)px;
+                  line-height:var(--box)px; text-align:center; border-radius:10px;
+                  background:#455a64; color:#fff; font-size:1.4rem;
+                  transition: left var(--dur) cubic-bezier(.4,.0,.2,1),
+                              transform var(--dur) cubic-bezier(.4,.0,.2,1),
+                              background var(--dur); }
+.key            { background:#c62828 !important; transform:translateY(-80px); }
+.compare        { background:#f9a825 !important; }
+
+#log            { max-width:620px; margin:24px auto; white-space:pre-line; font-size:.9rem; }
 </style>
 </head>
 <body>
-<h1>Insertion Sort Visualization</h1>
-<div id="wrap"></div>
+<h1>Insertion Sort – Push Animation</h1>
+
+<div id="stage"></div>
 <pre id="log"></pre>
 
 <script>
-/* ---------- 설정 값 ---------- */
-const DATA  = [5, 2, 9, 1, 5, 6]; // 정렬 대상
-const SPEED = 700;                // 단계 지연(ms)
+/* ----------- 데이터 & 설정 ----------- */
+const ARR        = [5, 2, 9, 1, 5, 6];        // 정렬 대상
+const DELAY      = 800;                       // 단계 지연(ms)
+const BOX_W      = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--box'));
+const GAP        = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'));
+const STEP       = BOX_W + GAP;
 
-/* ---------- DOM 초기화 ---------- */
-const wrap = document.getElementById('wrap');
-const log  = document.getElementById('log');
+/* ----------- DOM 초기화 ----------- */
+const stage = document.getElementById('stage');
+const logEl = document.getElementById('log');
+stage.style.width = `${ARR.length * STEP - GAP}px`; // 가로 길이 설정
 
-function render(arr){              // 박스 새로 그리기
-  wrap.innerHTML = '';
-  arr.forEach(v=>{
-    const d = document.createElement('div');
+function spawnBoxes(arr){
+  stage.innerHTML = '';
+  arr.forEach((v,i)=>{
+    const d   = document.createElement('div');
     d.className = 'cell';
     d.textContent = v;
-    wrap.appendChild(d);
+    d.style.left = `${i*STEP}px`;
+    stage.appendChild(d);
   });
 }
-render(DATA);
+spawnBoxes(ARR);
 
-/* ---------- 유틸 ---------- */
-const pause = ms => new Promise(r=>setTimeout(r,ms));
+/* ----------- 유틸 ----------- */
+const sleep  = ms => new Promise(r=>setTimeout(r,ms));
+const boxes  = () => [...document.querySelectorAll('.cell')];
 
-/* ---------- 핵심 애니메이션 ---------- */
-async function insertionSortVis(arr){
-  const cells = ()=>[...document.querySelectorAll('.cell')];
-
-  for(let i=1;i<arr.length;i++){
-    const keyVal = arr[i];
+/* ----------- 삽입정렬 애니메이션 ----------- */
+async function insertionSort(){
+  const data = [...ARR];              // 데이터 복사
+  for(let i=1;i<data.length;i++){
+    let keyVal = data[i];
     let j=i-1;
 
-    cells()[i].classList.add('key');      // key 강조
-    log.textContent += `[i=${i}] key=${keyVal}\n`;
-    await pause(SPEED/2);
+    /* key 박스 선택 & Lift */
+    const keyBox = boxes()[i];
+    keyBox.classList.add('key');
+    logEl.textContent += `[i=${i}] key=${keyVal}\n`;
+    await sleep(DELAY/2);
 
-    // 뒤로 밀어내기
-    while(j>=0 && arr[j] > keyVal){
-      arr[j+1] = arr[j];                  // 값 이동
-      // 애니메이션: 왼쪽 박스를 아래-오른쪽으로 부드럽게 이동
-      cells()[j].style.transform =
-        `translate(calc(var(--box)+var(--gap)), var(--box) )`;
-      await pause(SPEED);
+    /* 비교하며 밀어내기 */
+    while(j>=0 && data[j] > keyVal){
+      const compBox = boxes()[j];
+      compBox.classList.add('compare'); // 비교 하이라이트
 
-      /* DOM 재배치 */
-      wrap.insertBefore(cells()[j], cells()[j+2]);
-      cells()[j].style.transform = '';    // 원위치(transition으로 자연 복귀)
+      /* 데이터 & 위치 갱신 */
+      data[j+1]     = data[j];
+      compBox.style.left = `${(j+1)*STEP}px`;  // 오른쪽으로 슬라이드
+      await sleep(DELAY);
+
+      compBox.classList.remove('compare');
       j--;
     }
 
-    /* key 삽입 */
-    arr[j+1] = keyVal;
-    const keyBox = cells().find(c=>c.classList.contains('key'));
-    wrap.insertBefore(keyBox, cells()[j+1]);
+    /* key 값 내려 끼우기 */
+    data[j+1]       = keyVal;
+    keyBox.style.left = `${(j+1)*STEP}px`;
+    await sleep(DELAY/2);
     keyBox.classList.remove('key');
-    await pause(SPEED);
   }
-  log.textContent += `\n✔ 최종 결과: [${arr.join(', ')}]`;
+  logEl.textContent += `\n✔ 최종 결과: [${data.join(', ')}]`;
 }
 
-insertionSortVis([...DATA]);              // 원본 보호를 위해 복사 전달
+insertionSort();
 </script>
 </body>
 </html>
